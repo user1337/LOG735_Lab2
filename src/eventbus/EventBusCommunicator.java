@@ -1,9 +1,15 @@
 /******************************************************
-	Cours :           LOG730
-	Session :         Été 2010
-	Groupe :          01
-	Projet :          Laboratoire #2
-	Date création :   2010-05-21
+ Cours : 				LOG735
+ Session : 				Été 2015
+ Groupe : 				01
+ Projet : 				Laboratoire 2
+ Étudiants : 			Huy-Son Pham
+ 						Antoine McNabb-Baltar
+ Code(s) perm. : 		PHAH20118704
+ 						MCNA06089101
+ 					
+ Date création : 		21 mai 2015
+ Date dern. modif. : 	21 mai 2015
 ******************************************************
 Classe qui gère la transmission et la réception
 d'événements du côté du bus d'événements.
@@ -13,7 +19,8 @@ La classe est en constante attente de nouveaux événements
 au Communicator lui envoie un événement, le Communicator
 envoie l'événement aux Applications à l'aide d'un second
 Thread.
-******************************************************/ 
+******************************************************/
+
 package eventbus;
 
 import java.io.IOException;

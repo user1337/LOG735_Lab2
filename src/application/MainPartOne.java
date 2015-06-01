@@ -1,9 +1,15 @@
 /******************************************************
-	Cours :           LOG730
-	Session :         Été 2010
-	Groupe :          01
-	Projet :          Laboratoire #2
-	Date création :   2010-05-21
+ Cours : 				LOG735
+ Session : 				Été 2015
+ Groupe : 				01
+ Projet : 				Laboratoire 2
+ Étudiants : 			Huy-Son Pham
+ 						Antoine McNabb-Baltar
+ Code(s) perm. : 		PHAH20118704
+ 						MCNA06089101
+ 					
+ Date création : 		21 mai 2015
+ Date dern. modif. : 	1 juin 2015
 ******************************************************
 Exécutable de Application Un. À l'exécution, l'objet
 tente de se connecter à [IP]:12045 pour établir
@@ -11,7 +17,7 @@ un lien avec le bus d'événements.
 
 Délai de traitement des événements : 3 secondes.
 Événement synchronisé : affiche le mot "Vous".
-******************************************************/ 
+******************************************************/
 
 package application;
 
@@ -31,7 +37,10 @@ public class MainPartOne {
 		List<Class> listenedEvents = new ArrayList<Class>();
 		listenedEvents.add(IPartOneEvent.class);
 		listenedEvents.add(IEventSynchronized.class);
-		EventBusConnector bus = new EventBusConnector(listenedEvents, ip, 12045);
+		
+		// On indique que le connecteur est en première position(1) pour le traitement des évènements synchronisés.
+		EventBusConnector bus = new EventBusConnector(listenedEvents, ip, 12045, 1);
+		
 		UIMainWindow window = new UIMainWindow(bus, "App Un", "Vous", 3);
 		bus.addObserver(window);
 		

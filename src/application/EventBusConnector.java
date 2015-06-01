@@ -1,18 +1,25 @@
 /******************************************************
-	Cours :           LOG730
-	Session :         Été 2010
-	Groupe :          01
-	Projet :          Laboratoire #2
-	Date création :   2010-05-21
+ Cours : 				LOG735
+ Session : 				Ã‰tÃ© 2015
+ Groupe : 				01
+ Projet : 				Laboratoire 2
+ Ã‰tudiants : 			Huy-Son Pham
+ 						Antoine McNabb-Baltar
+ Code(s) perm. : 		PHAH20118704
+ 						MCNA06089101
+ 					
+ Date crÃ©ation : 		21 mai 2015
+ Date dern. modif. : 	1 juin 2015
 ******************************************************
-Classe qui gère la transmission et la réception
-d'événements du côté d'une instance d'Application.
+Classe qui gÃ¨re la transmission et la rÃ©ception
+d'Ã©vÃ©nements du cÃ´tÃ© d'une instance d'Application.
 
-La classe est en constante attente de nouveaux événements
-à l'aide d'un Thread. Lorsque l'Application associée
-au Connector lui envoie un événement, le Connector
-envoie l'événement au bus à l'aide d'un second Thread.
-******************************************************/ 
+La classe est en constante attente de nouveaux Ã©vÃ©nements
+Ã  l'aide d'un Thread. Lorsque l'Application associÃ©e
+au Connector lui envoie un Ã©vÃ©nement, le Connector
+envoie l'Ã©vÃ©nement au bus Ã  l'aide d'un second Thread.
+******************************************************/
+
 package application;
 
 import java.io.IOException;
@@ -22,11 +29,13 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import events.EventThatShouldBeSynchronized;
 import events.IEvent;
+import events.IEventSynchronized;
 
 
 public class EventBusConnector extends Thread implements IEventBusConnector {
-	// Liste des événements à écouter.
+	// Liste des Ã©vÃ©nements Ã  Ã©couter.
 	@SuppressWarnings("unchecked")
 	private List<Class> listenedEvents;
 	
@@ -37,9 +46,12 @@ public class EventBusConnector extends Thread implements IEventBusConnector {
 	private ObjectInputStream ois;
 	private ReadEventFromStream readStream;
 	
+	private int connectorNumber;
+	
 	@SuppressWarnings("unchecked")
-	public EventBusConnector(List<Class> listenedEvents, String ip, int port) {
+	public EventBusConnector(List<Class> listenedEvents, String ip, int port, int connectorNumber) {
 		this.listenedEvents = listenedEvents;
+		this.connectorNumber = connectorNumber;
 
 		try {
 			s = new Socket(ip, port);
@@ -58,13 +70,13 @@ public class EventBusConnector extends Thread implements IEventBusConnector {
 		readStream.start();
 	}
 	
-	//Thread qui envoie au bus d'événements les événements générés par
+	//Thread qui envoie au bus d'Ã©vÃ©nements les Ã©vÃ©nements gÃ©nÃ©rÃ©s par
 	//son application.
 	public void run()
 	{
 		while(true) {
-			//Offrir une petite pause à l'application; un système à événement n'a pas besoin
-			//de réactions immédiates
+			//Offrir une petite pause Ã  l'application; un systÃ¨me Ã  Ã©vÃ©nement n'a pas besoin
+			//de rÃ©actions immÃ©diates
 			try {
 				//Offrir une pause au thread
 				Thread.sleep(1000);
@@ -72,7 +84,7 @@ public class EventBusConnector extends Thread implements IEventBusConnector {
 				synchronized(lstEventsToSend) {
 					if(lstEventsToSend.size() > 0) {
 						IEvent ie = lstEventsToSend.get(0);
-						System.out.println("Envoie de l'événement " + ie.toString());
+						System.out.println("Envoie de l'Ã©vÃ©nement " + ie.toString());
 						oos.writeObject(ie);
 						lstEventsToSend.remove(0);
 					}
@@ -86,18 +98,40 @@ public class EventBusConnector extends Thread implements IEventBusConnector {
 	}
 	
 	/*
-	 * Compare un événement avec la liste d'événements à écouter.
+	 * Compare un Ã©vÃ©nement avec la liste d'Ã©vÃ©nements Ã  Ã©couter.
 	 */
 	@SuppressWarnings("unchecked")
 	public boolean listensToEvent(Object o)
 	{
+		EventThatShouldBeSynchronized syncEvent = null;
+		
 		boolean listens = false;
 		for(int i = 0; i < listenedEvents.size() && !listens; i++)
 		{
 			Class c = listenedEvents.get(i);
 			listens = (c.isInstance(o));
 		}
-		System.out.println("Réception de l'événement " + o.toString() + (listens?" traité":"ignoré"));
+		
+		/*
+		 * On regarde si c'est un Ã©vÃ¨nement synchronisÃ© que l'on est en train de traitÃ©.
+		 * Si c'est le cas, on indique qu'on doit Ã©couter l'Ã©vÃ¨nement seulement si celui-ci est destinÃ© au connecteur courant.
+		 */
+		if (EventThatShouldBeSynchronized.class.isInstance(o)) {
+			
+			syncEvent = ((EventThatShouldBeSynchronized) o);
+			
+			/*
+			 * On regarde si le connecteur cible de l'Ã©vÃ¨nement correspond au connecteur courant.
+			 * Si oui, on indique qu'on Ã©coute l'Ã©vÃ¨nement, sinon on indique le contraire.
+			 */
+			if (syncEvent.getTargetConnectorNumber() == connectorNumber) {
+				listens = true;				
+			} else {
+				listens = false;	
+			}
+		}
+		
+		System.out.println("RÃ©ception de l'Ã©vÃ©nement " + o.toString() + (listens?" traitÃ©":"ignorÃ©"));
 		return listens;
 	}
 	
@@ -107,8 +141,26 @@ public class EventBusConnector extends Thread implements IEventBusConnector {
 	
 	public void notifyObservers(IEvent event)
 	{
+		EventThatShouldBeSynchronized syncEvent = null;
+		
 		for(IObserver o : lstObserver) {
 			o.update(this, event);
+		}
+		
+		/*
+		 * D'abord, on attend que les manipulations de mise-Ã -jour soit effectuÃ©es(dÃ©lais + affichage de l'information).
+		 * Ensuite, on regarde si l'Ã©vÃ¨nement en traitement est un Ã©vÃ¨nement synchronisÃ©.
+		 * Si oui, on incrÃ©mente le connecteur cible de l'Ã©vÃ¨nement pour passer au prochain et on renvoit cet mÃªme Ã©vÃ¨nement. 
+		 * Sinon, on ne fait rien, car c'est un type d'Ã©vÃ¨nement habituel qui est en traitement. 
+		 */
+		if (EventThatShouldBeSynchronized.class.isInstance(event)) {
+			
+			syncEvent = ((EventThatShouldBeSynchronized) event);
+			
+			syncEvent.incrementTargetConnectorNumber(); // On change le connecteur cible pour le prochain.
+			
+			callEvent(syncEvent); // On envoit cet Ã©vÃ¨nement modifiÃ© dans le bus d'Ã©vÃ¨nement.
+			
 		}
 	}
 	
@@ -116,10 +168,12 @@ public class EventBusConnector extends Thread implements IEventBusConnector {
 	{
 		lstObserver.add(o);
 	}
+
+
 }
 
-//Thread qui écoute les événements provenant du bus d'événements.
-//Le Connector achemine les événements qui correspondent aux types à écouter
+//Thread qui Ã©coute les Ã©vÃ©nements provenant du bus d'Ã©vÃ©nements.
+//Le Connector achemine les Ã©vÃ©nements qui correspondent aux types Ã  Ã©couter
 //dans listenedEvenets.
 class ReadEventFromStream extends Thread {
 	private ObjectInputStream ois;
@@ -133,7 +187,7 @@ class ReadEventFromStream extends Thread {
 		while(true) {
 			try {
 				Object o = ois.readObject();
-				// Les événements reçus qui ne correspondent pas à ces types sont ignorés par
+				// Les Ã©vÃ©nements reÃ§us qui ne correspondent pas Ã  ces types sont ignorÃ©s par
 				// le Connector.
 				if (eventBusConn.listensToEvent(o))
 					eventBusConn.notifyObservers((IEvent)o);	

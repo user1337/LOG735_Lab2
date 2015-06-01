@@ -1,9 +1,15 @@
 /******************************************************
-	Cours :           LOG730
-	Session :         Été 2010
-	Groupe :          01
-	Projet :          Laboratoire #2
-	Date création :   2010-05-21
+ Cours : 				LOG735
+ Session : 				Été 2015
+ Groupe : 				01
+ Projet : 				Laboratoire 2
+ Étudiants : 			Huy-Son Pham
+ 						Antoine McNabb-Baltar
+ Code(s) perm. : 		PHAH20118704
+ 						MCNA06089101
+ 					
+ Date création : 		21 mai 2015
+ Date dern. modif. : 	21 mai 2015
 ******************************************************
 Interface graphique des applications simulées. MainPartOne,
 MainPartTwo et MainPartThree instancient cette classe.
@@ -19,7 +25,8 @@ synchronisé à toutes les applications.
 NOTE : Seules les classes internes implémentant ActionListener
 situées à la fin de la classe ont le potentiel de nécessiter 
 des modifications.
-******************************************************/ 
+******************************************************/
+
 package application;
 
 import java.awt.Color;
